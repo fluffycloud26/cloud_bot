@@ -1,0 +1,141 @@
+#import things here
+import datetime
+import discord
+import time
+from discord.ext import commands
+
+start_time = time.time()
+
+#bot command prefix
+client = commands.Bot(command_prefix='`')
+
+#prints:- We have logged as Cloud-Bot#6883
+@client.event
+async def on_ready():
+    print(f'We have logged as {client.user}')
+
+#bot status
+    await client.change_presence(activity=discord.Game(name="`cloudhelp || ☁"))
+
+#chatting with bot
+async def on_message(message):
+  if message.author == client.user:
+    return
+  if message.content.startswith('hlo', 'Hlo', 'hi', 'Hi'):
+    await message.channel.send('Hi, supp')
+  if message.content.startswith('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'):
+    await message.channel.send('Nice am good too.')
+
+#for reaction command
+@client.event
+async def on_message(message):
+    if "cloud" in message.content:
+        await message.add_reaction("<:cloud_bot:846664906518167562>")
+    await client.process_commands(message)
+
+#for help command
+client.remove_command("help")
+@client.command()
+async def cloudhelp(ctx):
+    embed = discord.Embed(title='Cloud Bot Help', description="Bot prefix = `", color=discord.Color.random())
+    embed.add_field(name="➡ Fun things to do.", value="..."".", inline=True)
+    embed.add_field(name="1. Ping", value="Shows ping Of bot.", inline=False)
+    embed.add_field(name="2. Whois @mentionuser", value="Shows info of Mentioned User.", inline=False)
+    embed.add_field(name="3. Uptime", value="Time for which bot is running.", inline=False)
+    embed.add_field(name="4. Avatar", value="Shows the avatar of mentioned user.", inline=False)
+    embed.add_field(name="5. Say {text}", value="Bot says whatever u want.")
+    embed.add_field(name="➡ Moderation Commands.", value="...", inline=False)
+    embed.add_field(name="1. Clear", value="Deletes 5 recent messages.", inline=False)
+    embed.add_field(name="2. Kick", value="Kicks the mentioned user.", inline=False)
+    embed.add_field(name="3. Ban", value="Bans the mentioned user.", inline=False)
+    embed.add_field(name="4. Mute", value="Mutes the mentioned user permanently ", inline=False)
+    embed.add_field(name="4. Unmute", value="Unmutes the mentioned user permanently ", inline=False)
+    embed.set_footer(text="Developed by fluffy_cloud.26 #3616")
+    await ctx.channel.send(embed=embed)
+
+#for ping command
+@client.command()
+async def Ping(ctx):
+    await ctx.channel.send(f'Pong!!! {round(client.latency * 1000)}ms')
+
+#for uptime command
+@client.command()
+async def Uptime(ctx):
+    current_time = time.time()
+    difference = int(round(current_time - start_time))
+    text = str(datetime.timedelta(seconds=difference))
+    uptime = discord.Embed(colour=discord.Color.random())
+    uptime.add_field(name="Uptime", value=text)
+    await ctx.send(embed=uptime)
+
+#for whois command
+@client.command()
+async def Whois(ctx, Member: discord.Member):
+    who = discord.Embed(title=Member.name, description=Member.mention, color=discord.Color.green())
+    who.add_field(name="ID", value=Member.id, inline=True)
+    created_at = Member.created_at.strftime("%b %d, %Y")
+    joined_at = Member.joined_at.strftime("%b %d, %Y")
+
+    who.add_field(name="Created Discord At", value=created_at)
+    who.add_field(name="Joined Server At", value=joined_at, inline=False)
+    who.set_thumbnail(url=Member.avatar_url)
+    who.set_footer(text=f"Requested By {ctx.author.name}")
+    await ctx.send(embed=who)
+
+#for avatar command
+@client.command()
+async def Avatar(ctx, member: discord.Member):
+    await ctx.send(member.avatar_url)
+
+@client.command()
+async def Clear(ctx, amount=5):
+    await ctx.channel.purge(limit=amount)
+
+@commands.has_permissions(ban_members=True)
+@client.command()
+async def Kick(ctx, user: discord.Member, *, reason="No reason provided"):
+    await user.kick(reason=reason)
+    kick = discord.Embed(title=f":boot: Kicked {user.name}!", description=f"Reason: {reason}\n By: {ctx.author.mention}")
+    await ctx.message.delete()
+    await ctx.channel.send(embed=kick)
+    await user.send(embed=kick)
+
+@commands.has_permissions(ban_members=True)
+@client.command()
+async def Ban(self, ctx, member: discord.Member, *, reason=None):
+    await member.ban(reason=reason)
+    await member.send(f"You have been banned in {ctx.guild} for {reason}")
+    await ctx.send(f'User {member} has been kick')
+
+@commands.has_permissions(manage_messages=True)
+@client.command()
+async def Mute(ctx, member: discord.Member, *, reason=None):
+    guild = ctx.guild
+    mutedRole = discord.utils.get(guild.roles, name="Muted")
+
+    if not mutedRole:
+        mutedRole = await guild.create_role(name="Muted")
+
+        for channel in guild.channels:
+            await channel.set_permissions(mutedRole, speak=False, send_messages=False, read_message_history=True, read_messages=False)
+    embed = discord.Embed(title="muted", description=f"{member.mention} was muted ", colour=discord.Color.random())
+    embed.add_field(name="reason:", value=reason, inline=False)
+    await ctx.send(embed=embed)
+    await member.add_roles(mutedRole, reason=reason)
+    await member.send(f" you have been muted from: {guild.name} reason: {reason}")
+
+@commands.has_permissions(manage_messages=True)
+@client.command()
+async def Unmute(ctx, member: discord.Member):
+   mutedRole = discord.utils.get(ctx.guild.roles, name="Muted")
+
+   await member.remove_roles(mutedRole)
+   await member.send(f" you have unmuted from:- {ctx.guild.name}")
+   embed = discord.Embed(title="unmute", description=f" unmuted-{member.mention}", colour=discord.Colour.light_gray())
+   await ctx.send(embed=embed)
+
+@client.command()
+async def Say(ctx=None):
+    await ctx.send(ctx)
+
+client.run("ODQ2NjIyMzkzNzgzMDI1Njg0.YKyMjA.CyMhG-CN648QeNe9QVpyEQZigbw")
